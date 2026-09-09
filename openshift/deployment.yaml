@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parasol-insurance-eap
+  labels:
+    app: parasol-insurance-eap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: parasol-insurance-eap
+  template:
+    metadata:
+      labels:
+        app: parasol-insurance-eap
+    spec:
+      containers:
+        - name: parasol-insurance-eap
+          image: image-registry.openshift-image-registry.svc:5000/parasol/parasol-insurance-eap:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DB_SERVICE_PREFIX_MAPPING
+              value: parasol-db=PostgreSQL
+            - name: DATASOURCES
+              value: parasol
+            - name: parasol_JNDI
+              value: java:jboss/datasources/ParasolDS
+            - name: parasol_DRIVER
+              value: postgresql
+            - name: parasol_CONNECTION_URL
+              value: jdbc:postgresql://parasol-db:5432/parasol
+            - name: parasol_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: parasol-db
+                  key: database-user
+            - name: parasol_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: parasol-db
+                  key: database-password
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi

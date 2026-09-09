@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Dashboard</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Open Claims</div>
+                <div class="stat-value">24</div>
+                <div class="stat-change up">+3 this week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Processed This Month</div>
+                <div class="stat-value">18</div>
+                <div class="stat-change up">+12% vs last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value">7</div>
+                <div class="stat-change down">2 overdue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Estimated Value</div>
+                <div class="stat-value">$412K</div>
+                <div class="stat-change">Across all open claims</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">Recent Claims</div>
+                <div class="card-body">
+                    <ul class="recent-claims-list" id="recent-claims"></ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Recent Activity</div>
+                <div class="card-body">
+                    <ul class="activity-list">
+                        <li>
+                            <div>Claim <strong>CLM605208</strong> submitted by Michael Turner</div>
+                            <div class="activity-time">2 hours ago</div>
+                        </li>
+                        <li>
+                            <div>Adjuster Rebecca Torres assigned to <strong>CLM849301</strong></div>
+                            <div class="activity-time">5 hours ago</div>
+                        </li>
+                        <li>
+                            <div>Claim <strong>CLM202402</strong> settlement approved - $18,500</div>
+                            <div class="activity-time">Yesterday</div>
+                        </li>
+                        <li>
+                            <div>Claim <strong>CLM202415</strong> denied - policy exclusion</div>
+                            <div class="activity-time">Yesterday</div>
+                        </li>
+                        <li>
+                            <div>New documents uploaded for <strong>CLM521205</strong></div>
+                            <div class="activity-time">2 days ago</div>
+                        </li>
+                        <li>
+                            <div>Claim <strong>CLM738192</strong> liability settlement finalized</div>
+                            <div class="activity-time">3 days ago</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('dashboard');
+
+        fetch('/api/claims')
+            .then(r => r.json())
+            .then(claims => {
+                const list = document.getElementById('recent-claims');
+                claims.slice(0, 5).forEach(c => {
+                    const statusClass = c.status.toLowerCase().replace(/\s+/g, '-');
+                    list.innerHTML += `
+                        <li>
+                            <div class="recent-claim-info">
+                                <a href="/claim-detail.html?id=${c.claimNumber}" class="recent-claim-id">${c.claimNumber}</a>
+                                <span class="recent-claim-client">${c.clientName} &middot; ${c.category}</span>
+                            </div>
+                            <span class="status-badge ${statusClass}">${c.status}</span>
+                        </li>`;
+                });
+            });
+    </script>
+</body>
+</html>

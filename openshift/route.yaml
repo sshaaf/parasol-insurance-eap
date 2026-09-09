@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: parasol-insurance-eap
+  labels:
+    app: parasol-insurance-eap
+spec:
+  to:
+    kind: Service
+    name: parasol-insurance-eap
+  port:
+    targetPort: http

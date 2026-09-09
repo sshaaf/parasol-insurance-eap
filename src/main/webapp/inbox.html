@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Inbox <span id="inbox-count" class="inbox-count"></span></h1>
+
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th style="width:20%">From</th>
+                    <th style="width:30%">Subject</th>
+                    <th style="width:15%">Department</th>
+                    <th style="width:20%">Time</th>
+                    <th style="width:15%">Info</th>
+                </tr>
+            </thead>
+            <tbody id="inbox-body">
+                <tr><td colspan="5" style="text-align:center;color:#999;padding:40px">Waiting for emails...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('inbox');
+
+        let lastId = 0;
+        let totalCount = 0;
+        let hasEmails = false;
+        let expandedId = null;
+
+        function deptClass(dept) {
+            if (dept === 'REVIEW REQUIRED') return 'review-required';
+            return dept.toLowerCase();
+        }
+
+        function deptLabel(dept) {
+            if (dept === 'REVIEW REQUIRED') return '\u26A0 REVIEW REQUIRED';
+            return dept;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function extractName(from) {
+            const lt = from.indexOf('<');
+            return lt > 0 ? from.substring(0, lt).trim() : from;
+        }
+
+        function renderRow(e) {
+            return '<tr class="clickable-row" data-id="' + e.id + '" onclick="toggleDetail(' + e.id + ')">' +
+                '<td>' + escapeHtml(extractName(e.from)) + '</td>' +
+                '<td>' + escapeHtml(e.subject) + '</td>' +
+                '<td><span class="dept-badge ' + deptClass(e.department) + '">' + deptLabel(e.department) + '</span></td>' +
+                '<td>' + e.receivedAt + '</td>' +
+                '<td>' +
+                    '<span class="info-icon" title="' + escapeHtml(e.routingReason) + '">&#8505;' +
+                        '<span class="info-tooltip">' + escapeHtml(e.routingReason) + '</span>' +
+                    '</span>' +
+                '</td>' +
+            '</tr>';
+        }
+
+        function renderDetailRow(e) {
+            return '<tr class="email-detail-row" id="detail-' + e.id + '">' +
+                '<td colspan="5">' +
+                    '<div class="email-detail">' +
+                        '<div class="email-detail-grid">' +
+                            '<span class="email-detail-label">From</span>' +
+                            '<span class="email-detail-value">' + escapeHtml(e.from) + '</span>' +
+                            '<span class="email-detail-label">Subject</span>' +
+                            '<span class="email-detail-value">' + escapeHtml(e.subject) + '</span>' +
+                            '<span class="email-detail-label">Received</span>' +
+                            '<span class="email-detail-value">' + e.receivedAt + '</span>' +
+                            '<span class="email-detail-label">Department</span>' +
+                            '<span class="email-detail-value"><span class="dept-badge ' + deptClass(e.department) + '">' + deptLabel(e.department) + '</span></span>' +
+                            '<span class="email-detail-label">Routing Reason</span>' +
+                            '<span class="email-detail-value">' + escapeHtml(e.routingReason) + '</span>' +
+                        '</div>' +
+                        '<div class="email-detail-body">' + escapeHtml(e.body) + '</div>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        }
+
+        // Store emails by id for detail rendering
+        const emailsById = {};
+
+        function toggleDetail(id) {
+            const existing = document.getElementById('detail-' + id);
+            if (existing) {
+                existing.remove();
+                expandedId = null;
+                return;
+            }
+
+            // Close any open detail
+            const openDetail = document.querySelector('.email-detail-row');
+            if (openDetail) openDetail.remove();
+
+            const row = document.querySelector('tr[data-id="' + id + '"]');
+            const email = emailsById[id];
+            if (row && email) {
+                row.insertAdjacentHTML('afterend', renderDetailRow(email));
+                expandedId = id;
+            }
+        }
+
+        function updateCount() {
+            document.getElementById('inbox-count').textContent = '(' + totalCount + ')';
+        }
+
+        function poll() {
+            const url = lastId > 0 ? '/api/inbox?after=' + lastId : '/api/inbox';
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(emails) {
+                    if (emails.length === 0) return;
+
+                    const tbody = document.getElementById('inbox-body');
+
+                    if (!hasEmails) {
+                        tbody.innerHTML = '';
+                        hasEmails = true;
+                    }
+
+                    // emails come newest-first; prepend in reverse so newest ends up on top
+                    var reversed = emails.slice().reverse();
+                    for (var i = 0; i < reversed.length; i++) {
+                        var e = reversed[i];
+                        emailsById[e.id] = e;
+                        tbody.insertAdjacentHTML('afterbegin', renderRow(e));
+                        if (e.id > lastId) lastId = e.id;
+                        totalCount++;
+                    }
+                    updateCount();
+                })
+                .catch(function() {});
+        }
+
+        poll();
+        setInterval(poll, 10000);
+    </script>
+</body>
+</html>
