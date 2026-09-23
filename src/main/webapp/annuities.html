@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annuities - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Annuities</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Contracts In Force</div>
+                <div class="stat-value">5</div>
+                <div class="stat-change">Demo book</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Assets Under Mgmt</div>
+                <div class="stat-value">$2.4M</div>
+                <div class="stat-change up">+4.2% YTD</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Payouts This Month</div>
+                <div class="stat-value">$12.8K</div>
+                <div class="stat-change">Scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Crediting Rate</div>
+                <div class="stat-value">3.85%</div>
+                <div class="stat-change up">Fixed products</div>
+            </div>
+        </div>
+
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th>Contract #</th>
+                    <th>Product</th>
+                    <th>Owner</th>
+                    <th>Issue Date</th>
+                    <th>Value</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="annuities-body"></tbody>
+        </table>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('annuities');
+
+        const annuities = [
+            { number: 'ANN-100284', product: 'Fixed Deferred', owner: 'Sarah Mitchell', issued: '2019-04-12', value: '$186,400', status: 'Accumulating' },
+            { number: 'ANN-100891', product: 'Immediate Income', owner: 'Robert Chen', issued: '2021-08-01', value: '$312,000', status: 'In Payout' },
+            { number: 'ANN-101455', product: 'Indexed', owner: 'Emily Watson', issued: '2022-01-20', value: '$95,750', status: 'Accumulating' },
+            { number: 'ANN-102010', product: 'Fixed Deferred', owner: "Patricia O'Brien", issued: '2018-11-05', value: '$428,900', status: 'Accumulating' },
+            { number: 'ANN-102644', product: 'Variable', owner: 'David Park', issued: '2023-06-15', value: '$67,200', status: 'Accumulating' },
+        ];
+
+        function statusClass(status) {
+            return status === 'In Payout' ? 'in-process' : 'processed';
+        }
+
+        document.getElementById('annuities-body').innerHTML = annuities.map(a => `
+            <tr>
+                <td><span class="claim-link">${a.number}</span></td>
+                <td>${a.product}</td>
+                <td>${a.owner}</td>
+                <td>${a.issued}</td>
+                <td>${a.value}</td>
+                <td><span class="status-badge ${statusClass(a.status)}">${a.status}</span></td>
+            </tr>`).join('');
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverages - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Coverages</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Coverage Lines</div>
+                <div class="stat-value">8</div>
+                <div class="stat-change">In product catalog</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Most Selected</div>
+                <div class="stat-value">Collision</div>
+                <div class="stat-change up">62% of auto book</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Deductible</div>
+                <div class="stat-value">$750</div>
+                <div class="stat-change">Across personal lines</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Umbrella Attach</div>
+                <div class="stat-value">18%</div>
+                <div class="stat-change up">+3 pts YoY</div>
+            </div>
+        </div>
+
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th>Coverage</th>
+                    <th>Line</th>
+                    <th>Limit</th>
+                    <th>Deductible</th>
+                    <th>Typical Premium</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="coverages-body"></tbody>
+        </table>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('coverages');
+
+        const coverages = [
+            { name: 'Bodily Injury Liability', line: 'Auto', limit: '$100,000 / $300,000', deductible: '—', premium: '$620/yr', status: 'Available' },
+            { name: 'Property Damage Liability', line: 'Auto', limit: '$50,000', deductible: '—', premium: '$410/yr', status: 'Available' },
+            { name: 'Collision', line: 'Auto', limit: 'ACV', deductible: '$500', premium: '$780/yr', status: 'Available' },
+            { name: 'Comprehensive', line: 'Auto', limit: 'ACV', deductible: '$250', premium: '$340/yr', status: 'Available' },
+            { name: 'Dwelling (HO-3)', line: 'Homeowners', limit: 'Replacement cost', deductible: '$1,000', premium: '$1,850/yr', status: 'Available' },
+            { name: 'Personal Property', line: 'Homeowners', limit: '70% of dwelling', deductible: '$1,000', premium: '$420/yr', status: 'Available' },
+            { name: 'General Liability', line: 'Commercial', limit: '$1,000,000', deductible: '$2,500', premium: '$2,400/yr', status: 'Available' },
+            { name: 'Personal Umbrella', line: 'Umbrella', limit: '$1,000,000', deductible: '$0', premium: '$280/yr', status: 'Available' },
+        ];
+
+        document.getElementById('coverages-body').innerHTML = coverages.map(c => `
+            <tr>
+                <td><span class="claim-link">${c.name}</span></td>
+                <td>${c.line}</td>
+                <td>${c.limit}</td>
+                <td>${c.deductible}</td>
+                <td>${c.premium}</td>
+                <td><span class="status-badge processed">${c.status}</span></td>
+            </tr>`).join('');
+    </script>
+</body>
+</html>

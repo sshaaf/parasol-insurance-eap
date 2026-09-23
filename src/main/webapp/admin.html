@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Admin</h1>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">Users</div>
+                <div class="card-body">
+                    <table class="claims-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Alex Garcia</td><td>Claims Manager</td><td><span class="status-badge processed">Active</span></td></tr>
+                            <tr><td>Rebecca Torres</td><td>Adjuster</td><td><span class="status-badge processed">Active</span></td></tr>
+                            <tr><td>Marcus Johnson</td><td>Adjuster</td><td><span class="status-badge processed">Active</span></td></tr>
+                            <tr><td>Angela Davis</td><td>Liability Specialist</td><td><span class="status-badge processed">Active</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">System</div>
+                <div class="card-body">
+                    <ul class="activity-list">
+                        <li>
+                            <div>Email intake queue: <strong>healthy</strong></div>
+                            <div class="activity-time">Embedded Artemis</div>
+                        </li>
+                        <li>
+                            <div>Datasource ParasolDS: <strong>connected</strong></div>
+                            <div class="activity-time">PostgreSQL</div>
+                        </li>
+                        <li>
+                            <div>Sample email generator: <strong>running</strong></div>
+                            <div class="activity-time">Every ~45s</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>initLayout('admin');</script>
+</body>
+</html>
