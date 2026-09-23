@@ -1,101 +1,138 @@
-# Parasol Insurance (EAP 7)
+# Parasol Insurance (Quarkus)
 
-Legacy Java EE 8 application for the **EAP 7 → Quarkus** migration demo. This is the "before" application; the modernized Quarkus version lives in the sibling repo [`parasol-insurance`](../parasol-insurance).
-
-## Architecture
-
-- **JAX-RS** REST API for claims and inbox
-- **JPA 2.2** + PostgreSQL for claims persistence
-- **JMS** (embedded ActiveMQ Artemis) for email intake
-- **@Stateless EJB** for business logic (`EmailRoutingService`, `ClaimService`)
-- **@MessageDriven** bean for async email consumption (`EmailIntakeMDB`)
-- **@Singleton EJB** with timer for sample email generation
-- Rule-based email routing (no AI libraries)
+Java / Quarkus application for the **EAP 7 → Quarkus** migration demo. Serves a static UI plus REST APIs for claims and inbox, with in-process reactive messaging (no external broker required).
 
 ## Prerequisites
 
-- Java 11
+- Java 17+
 - Maven 3.8+
-- Access to the [Red Hat GA Maven repository](https://maven.repository.redhat.com/ga/)
-- JBoss EAP 7.4 (for local deployment) or OpenShift 4.x
+- For OpenShift deploy: `oc` logged in to a project with create permissions
 
-### Maven settings for Red Hat GA repository
-
-Add the Red Hat GA repository to your `~/.m2/settings.xml` if not using the repository declared in `pom.xml`:
-
-```xml
-<settings>
-  <profiles>
-    <profile>
-      <id>redhat-ga</id>
-      <repositories>
-        <repository>
-          <id>jboss-ga-repository</id>
-          <url>https://maven.repository.redhat.com/ga/</url>
-          <releases><enabled>true</enabled></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-      </repositories>
-    </profile>
-  </profiles>
-  <activeProfiles>
-    <activeProfile>redhat-ga</activeProfile>
-  </activeProfiles>
-</settings>
-```
-
-## Build
+## Local development
 
 ```bash
-mvn clean package
+mvn quarkus:dev
 ```
 
-Produces `target/parasol-insurance-eap.war`.
-
-## Local deployment (EAP 7.4)
-
-1. Create a PostgreSQL datasource named `ParasolDS` bound to JNDI `java:jboss/datasources/ParasolDS`
-2. Deploy the WAR to EAP 7.4
-3. The JMS queue `java:/jms/queue/email-intake` is created automatically via `jboss-all.xml`
-
-### Verify
+Uses the default profile (in-memory H2). UI: http://localhost:8080/ — API: http://localhost:8080/api/claims
 
 ```bash
-curl http://localhost:8080/api/claims
-curl http://localhost:8080/api/inbox
+mvn clean package -DskipTests
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-After ~50 seconds, the inbox should receive routed emails from the sample generator.
+Packaged runs use the **`%prod`** profile (see `application.properties`).
 
-## OpenShift deployment
+## OpenShift deployment (from local code)
 
-### Build image (S2I)
+Assumes `oc` is already logged in and a project is selected (`oc project`).
+
+### 1. Provision PostgreSQL
 
 ```bash
-oc new-project parasol
-oc new-app jboss-eap74-openjdk11-openshift~. \
-  --name=parasol-insurance-eap \
-  --context-dir=. \
-  -e DB_SERVICE_PREFIX_MAPPING=parasol-db=PostgreSQL \
-  -e DATASOURCES=parasol \
-  -e parasol_JNDI=java:jboss/datasources/ParasolDS \
-  -e parasol_DRIVER=postgresql \
-  -e parasol_CONNECTION_URL=jdbc:postgresql://parasol-db:5432/parasol \
-  -e parasol_USERNAME=parasol \
-  -e parasol_PASSWORD=parasol
+oc new-app --template=postgresql-ephemeral \
+  -p DATABASE_SERVICE_NAME=parasol-db \
+  -p POSTGRESQL_USER=parasol \
+  -p POSTGRESQL_PASSWORD=parasol \
+  -p POSTGRESQL_DATABASE=parasol
 ```
 
-Or apply the manifests:
+Wait until the database is ready:
 
 ```bash
-oc apply -f openshift/
+oc rollout status deploymentconfig/parasol-db 2>/dev/null \
+  || oc rollout status deployment/parasol-db
+oc get pods -l name=parasol-db
 ```
 
-### Verify on OpenShift
+This creates Service/Secret `parasol-db` (`database-user`, `database-password`, `database-name`).
 
-1. Open the Route URL — dashboard should load
-2. `GET /api/claims` returns 8 seeded claims
-3. Inbox page receives routed emails after the timer fires (~50s)
+For a PVC-backed database instead:
+
+```bash
+oc new-app --template=postgresql-persistent \
+  -p DATABASE_SERVICE_NAME=parasol-db \
+  -p POSTGRESQL_USER=parasol \
+  -p POSTGRESQL_PASSWORD=parasol \
+  -p POSTGRESQL_DATABASE=parasol \
+  -p VOLUME_CAPACITY=1Gi
+```
+
+### 2. Build the Quarkus app locally
+
+```bash
+mvn clean package -DskipTests
+```
+
+Produces `target/quarkus-app/`.
+
+### 3. Build the container image on the cluster (binary Docker build)
+
+```bash
+# Assemble a small build context (Dockerfile + quarkus-app)
+rm -rf /tmp/parasol-build
+mkdir -p /tmp/parasol-build
+cp src/main/docker/Dockerfile.jvm /tmp/parasol-build/Dockerfile
+cp -R target/quarkus-app /tmp/parasol-build/
+
+# Create ImageStream + BuildConfig once, then upload sources
+oc new-build --name=parasol-insurance --binary --strategy=docker -l app=parasol-insurance
+oc start-build parasol-insurance --from-dir=/tmp/parasol-build --follow
+```
+
+### 4. Deploy the application
+
+Apply the manifests (image namespace is filled from the current project). The Deployment maps Secret `parasol-db` into the `POSTGRESQL_*` env vars expected by the **`%prod`** profile:
+
+```bash
+NS=$(oc project -q)
+sed "s|REPLACE_NAMESPACE|${NS}|g" openshift/deployment.yaml | oc apply -f -
+oc apply -f openshift/service.yaml
+oc apply -f openshift/route.yaml
+oc rollout status deployment/parasol-insurance
+```
+
+Alternatively, create the app from the ImageStream and set env by hand:
+
+```bash
+oc new-app parasol-insurance --name=parasol-insurance
+oc set env deployment/parasol-insurance \
+  POSTGRESQL_HOST=parasol-db \
+  POSTGRESQL_PORT=5432 \
+  POSTGRESQL_USER="$(oc get secret parasol-db -o jsonpath='{.data.database-user}' | base64 -d)" \
+  POSTGRESQL_PASSWORD="$(oc get secret parasol-db -o jsonpath='{.data.database-password}' | base64 -d)" \
+  POSTGRESQL_DATABASE="$(oc get secret parasol-db -o jsonpath='{.data.database-name}' | base64 -d)"
+oc expose service/parasol-insurance
+```
+### 5. Verify
+
+```bash
+ROUTE=$(oc get route parasol-insurance -o jsonpath='{.spec.host}')
+echo "https://${ROUTE}/"
+curl -sk "https://${ROUTE}/api/claims"
+curl -sk "https://${ROUTE}/api/inbox"
+```
+
+Open the Route URL in a browser — the dashboard should load. After ~50s the scheduled email generator should populate the inbox.
+
+### `%prod` configuration (OpenShift)
+
+| Property / env | Purpose |
+|----------------|---------|
+| `POSTGRESQL_HOST` | DB service DNS (`parasol-db`) |
+| `POSTGRESQL_PORT` | `5432` |
+| `POSTGRESQL_USER` / `PASSWORD` / `DATABASE` | From Secret `parasol-db` |
+| Hibernate `drop-and-create` + `import.sql` | Demo schema + seed data on startup |
+
+Dev (`quarkus:dev`) keeps H2; packaged / OpenShift runs use PostgreSQL via `%prod`.
+
+### Tear down
+
+```bash
+oc delete route,service,deployment,imagestream,buildconfig parasol-insurance --ignore-not-found
+oc delete all -l template=postgresql-ephemeral --ignore-not-found
+oc delete secret,service,deploymentconfig,deployment parasol-db --ignore-not-found
+```
 
 ## API endpoints
 
@@ -105,15 +142,3 @@ oc apply -f openshift/
 | GET | `/api/claims/{claimNumber}` | Get claim by number |
 | GET | `/api/inbox` | List routed emails |
 | GET | `/api/inbox?after={id}` | Poll for new emails |
-
-## Migration comparison
-
-| Concern | EAP 7 (this app) | Quarkus (`parasol-insurance`) |
-|---------|------------------|-------------------------------|
-| Packaging | WAR | fast-jar |
-| APIs | `javax.*` | `jakarta.*` |
-| Business logic | `@Stateless` EJB | `@ApplicationScoped` CDI |
-| Messaging | JMS MDB | Kafka `@Incoming` |
-| Scheduling | EJB `@Timeout` timer | Quarkus `@Scheduled` |
-| Data access | JPA `EntityManager` | Hibernate Panache |
-| Messaging broker | Embedded Artemis | Strimzi Kafka |

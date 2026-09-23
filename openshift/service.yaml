@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: parasol-insurance-eap
+  name: parasol-insurance
   labels:
-    app: parasol-insurance-eap
+    app: parasol-insurance
 spec:
   selector:
-    app: parasol-insurance-eap
+    app: parasol-insurance
   ports:
     - name: http
       port: 8080
-      targetPort: 8080
+      targetPort: http
       protocol: TCP

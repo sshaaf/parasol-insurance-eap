@@ -1,46 +1,59 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: parasol-insurance-eap
+  name: parasol-insurance
   labels:
-    app: parasol-insurance-eap
+    app: parasol-insurance
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: parasol-insurance-eap
+      app: parasol-insurance
   template:
     metadata:
       labels:
-        app: parasol-insurance-eap
+        app: parasol-insurance
     spec:
       containers:
-        - name: parasol-insurance-eap
-          image: image-registry.openshift-image-registry.svc:5000/parasol/parasol-insurance-eap:latest
+        - name: parasol-insurance
+          image: image-registry.openshift-image-registry.svc:5000/REPLACE_NAMESPACE/parasol-insurance:latest
+          imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
               protocol: TCP
           env:
-            - name: DB_SERVICE_PREFIX_MAPPING
-              value: parasol-db=PostgreSQL
-            - name: DATASOURCES
-              value: parasol
-            - name: parasol_JNDI
-              value: java:jboss/datasources/ParasolDS
-            - name: parasol_DRIVER
-              value: postgresql
-            - name: parasol_CONNECTION_URL
-              value: jdbc:postgresql://parasol-db:5432/parasol
-            - name: parasol_USERNAME
+            - name: POSTGRESQL_HOST
+              value: parasol-db
+            - name: POSTGRESQL_PORT
+              value: "5432"
+            - name: POSTGRESQL_USER
               valueFrom:
                 secretKeyRef:
                   name: parasol-db
                   key: database-user
-            - name: parasol_PASSWORD
+            - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: parasol-db
                   key: database-password
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: parasol-db
+                  key: database-name
+          readinessProbe:
+            httpGet:
+              path: /api/claims
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/claims
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
           resources:
             limits:
               cpu: "1"

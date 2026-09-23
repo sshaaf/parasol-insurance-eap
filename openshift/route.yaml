@@ -1,12 +1,15 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: parasol-insurance-eap
+  name: parasol-insurance
   labels:
-    app: parasol-insurance-eap
+    app: parasol-insurance
 spec:
   to:
     kind: Service
-    name: parasol-insurance-eap
+    name: parasol-insurance
   port:
     targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
