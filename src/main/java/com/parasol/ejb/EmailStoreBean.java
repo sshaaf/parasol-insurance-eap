@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.ejb.Singleton;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 import com.parasol.model.Email;
 
-@Singleton
+@ApplicationScoped
+@Transactional
 public class EmailStoreBean {
 
     private final AtomicLong idSequence = new AtomicLong(0);

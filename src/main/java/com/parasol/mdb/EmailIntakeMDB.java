@@ -3,36 +3,31 @@ package com.parasol.mdb;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.EJB;
-import javax.ejb.MessageDriven;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import com.parasol.ejb.EmailRoutingService;
 import com.parasol.ejb.EmailStoreBean;
 import com.parasol.model.Email;
 
-@MessageDriven(activationConfig = {
-        @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = "java:/jms/queue/email-intake"),
-        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")
-})
-public class EmailIntakeMDB implements MessageListener {
+@ApplicationScoped
+public class EmailIntakeMDB {
 
     private static final Logger LOG = Logger.getLogger(EmailIntakeMDB.class.getName());
 
-    @EJB
+    @Inject
     private EmailRoutingService routingService;
 
-    @EJB
+    @Inject
     private EmailStoreBean emailStore;
 
-    @Override
-    public void onMessage(Message message) {
+    @Incoming("email-intake")
+    @Transactional
+    public void onMessage(String json) {
         try {
-            String json = ((TextMessage) message).getText();
             Email email = routingService.route(json);
             emailStore.add(email);
         } catch (Exception e) {

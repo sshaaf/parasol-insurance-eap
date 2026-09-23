@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriptions - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Subscriptions</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Active Subscriptions</div>
+                <div class="stat-value">7</div>
+                <div class="stat-change up">+2 this month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">MRR</div>
+                <div class="stat-value">$1,184</div>
+                <div class="stat-change up">+8% MoM</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Failed Payments</div>
+                <div class="stat-value">1</div>
+                <div class="stat-change down">Needs retry</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Plan</div>
+                <div class="stat-value">$169</div>
+                <div class="stat-change">Per month</div>
+            </div>
+        </div>
+
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th>Subscription ID</th>
+                    <th>Plan</th>
+                    <th>Customer</th>
+                    <th>Billing</th>
+                    <th>Next Charge</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="subs-body"></tbody>
+        </table>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('subscriptions');
+
+        const subscriptions = [
+            { id: 'SUB-44012', plan: 'Roadside Assist Plus', customer: 'Sarah Mitchell', billing: '$19/mo', next: '2025-02-01', status: 'Active' },
+            { id: 'SUB-44088', plan: 'Home Monitor Basic', customer: 'Emily Watson', billing: '$29/mo', next: '2025-02-05', status: 'Active' },
+            { id: 'SUB-44155', plan: 'Cyber Protect', customer: 'Robert Chen', billing: '$15/mo', next: '2025-02-03', status: 'Active' },
+            { id: 'SUB-44201', plan: 'Roadside Assist Plus', customer: 'Michael Turner', billing: '$19/mo', next: '2025-01-28', status: 'Past Due' },
+            { id: 'SUB-44267', plan: 'Travel Cover Monthly', customer: 'David Park', billing: '$45/mo', next: '2025-02-10', status: 'Active' },
+            { id: 'SUB-44310', plan: 'Pet Wellness', customer: "Patricia O'Brien", billing: '$32/mo', next: '2025-02-02', status: 'Active' },
+            { id: 'SUB-44388', plan: 'Home Monitor Pro', customer: 'Karen Foster', billing: '$49/mo', next: '2025-02-08', status: 'Active' },
+            { id: 'SUB-44402', plan: 'Cyber Protect', customer: 'James Rodriguez', billing: '$15/mo', next: '—', status: 'Cancelled' },
+        ];
+
+        function statusClass(status) {
+            if (status === 'Active') return 'processed';
+            if (status === 'Past Due') return 'in-process';
+            if (status === 'Cancelled') return 'denied';
+            return 'new';
+        }
+
+        document.getElementById('subs-body').innerHTML = subscriptions.map(s => `
+            <tr>
+                <td><span class="claim-link">${s.id}</span></td>
+                <td>${s.plan}</td>
+                <td>${s.customer}</td>
+                <td>${s.billing}</td>
+                <td>${s.next}</td>
+                <td><span class="status-badge ${statusClass(s.status)}">${s.status}</span></td>
+            </tr>`).join('');
+    </script>
+</body>
+</html>

@@ -5,13 +5,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.ejb.Stateless;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parasol.model.Email;
 
-@Stateless
+@ApplicationScoped
+@Transactional
 public class EmailRoutingService {
 
     private static final List<String> EXISTING_CUSTOMERS = Arrays.asList(
@@ -31,7 +34,8 @@ public class EmailRoutingService {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    @Inject
+    private ObjectMapper mapper;
 
     public Email route(String json) throws Exception {
         JsonNode node = mapper.readTree(json);
@@ -49,7 +53,7 @@ public class EmailRoutingService {
 
         if (matchedCustomer != null && hasClaim) {
             department = "CLAIMS";
-            reason = "Existing customer " + matchedCustomer + " \u2014 possible claim";
+            reason = "Existing customer " + matchedCustomer + "  possible claim";
         } else if (matchedCustomer != null) {
             department = "RETENTION";
             reason = "Detected existing customer: " + matchedCustomer;
@@ -58,10 +62,10 @@ public class EmailRoutingService {
             reason = "Possible claim from new customer";
         } else if (containsReviewTrigger(combinedText)) {
             department = "REVIEW REQUIRED";
-            reason = "Unable to auto-classify \u2014 manual review needed";
+            reason = "Unable to auto-classify  manual review needed";
         } else {
             department = "ACQUISITION";
-            reason = "Unknown customer \u2014 potential new business";
+            reason = "Unknown customer  potential new business";
         }
 
         return new Email(

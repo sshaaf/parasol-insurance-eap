@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policies - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Policies</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Active Policies</div>
+                <div class="stat-value">6</div>
+                <div class="stat-change up">+1 this quarter</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Premium in Force</div>
+                <div class="stat-value">$94.2K</div>
+                <div class="stat-change">Annualized</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Renewals Due</div>
+                <div class="stat-value">2</div>
+                <div class="stat-change down">Next 30 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Tenure</div>
+                <div class="stat-value">4.1 yrs</div>
+                <div class="stat-change up">Stable book</div>
+            </div>
+        </div>
+
+        <div class="table-controls">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search policies">
+                <span class="search-icon">&#128269;</span>
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" id="filter-type">
+                    <option value="">Any type</option>
+                    <option value="Auto">Auto</option>
+                    <option value="Homeowners">Homeowners</option>
+                    <option value="General Liability">General Liability</option>
+                </select>
+                <select class="filter-select" id="filter-status">
+                    <option value="">Any status</option>
+                    <option value="Active">Active</option>
+                    <option value="Pending Renewal">Pending Renewal</option>
+                    <option value="Lapsed">Lapsed</option>
+                </select>
+            </div>
+        </div>
+
+        <table class="claims-table">
+            <thead>
+                <tr>
+                    <th>Policy Number</th>
+                    <th>Type</th>
+                    <th>Insured</th>
+                    <th>Effective</th>
+                    <th>Premium</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="policies-body"></tbody>
+        </table>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('policies');
+
+        const policies = [
+            { number: 'AC-987654321', type: 'Auto', insured: 'Sarah Mitchell', effective: '2024-03-01', premium: '$1,840', status: 'Active' },
+            { number: 'PT-567890', type: 'Auto', insured: 'Robert Chen', effective: '2023-11-15', premium: '$2,160', status: 'Active' },
+            { number: 'HO-987654', type: 'Homeowners', insured: 'Emily Watson', effective: '2024-01-01', premium: '$3,420', status: 'Pending Renewal' },
+            { number: 'AC-5165426', type: 'Auto', insured: 'James Rodriguez', effective: '2022-09-01', premium: '$2,890', status: 'Active' },
+            { number: 'HO-3948271', type: 'Homeowners', insured: "Patricia O'Brien", effective: '2023-06-15', premium: '$2,760', status: 'Active' },
+            { number: 'GL-4928371', type: 'General Liability', insured: 'Karen Foster', effective: '2024-02-01', premium: '$4,800', status: 'Active' },
+            { number: 'AC-8392741', type: 'Auto', insured: 'David Park', effective: '2021-12-01', premium: '$1,920', status: 'Pending Renewal' },
+            { number: 'AC-768901', type: 'Auto', insured: 'Michael Turner', effective: '2024-08-01', premium: '$1,650', status: 'Active' },
+        ];
+
+        function statusClass(status) {
+            if (status === 'Active') return 'processed';
+            if (status === 'Pending Renewal') return 'in-process';
+            if (status === 'Lapsed') return 'denied';
+            return 'new';
+        }
+
+        function render(rows) {
+            document.getElementById('policies-body').innerHTML = rows.map(p => `
+                <tr>
+                    <td><span class="claim-link">${p.number}</span></td>
+                    <td>${p.type}</td>
+                    <td>${p.insured}</td>
+                    <td>${p.effective}</td>
+                    <td>${p.premium}</td>
+                    <td><span class="status-badge ${statusClass(p.status)}">${p.status}</span></td>
+                </tr>`).join('');
+        }
+
+        function filter() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const type = document.getElementById('filter-type').value;
+            const status = document.getElementById('filter-status').value;
+            render(policies.filter(p =>
+                (!q || p.number.toLowerCase().includes(q) || p.insured.toLowerCase().includes(q)) &&
+                (!type || p.type === type) &&
+                (!status || p.status === status)
+            ));
+        }
+
+        document.getElementById('search-input').addEventListener('input', filter);
+        document.getElementById('filter-type').addEventListener('change', filter);
+        document.getElementById('filter-status').addEventListener('change', filter);
+        render(policies);
+    </script>
+</body>
+</html>

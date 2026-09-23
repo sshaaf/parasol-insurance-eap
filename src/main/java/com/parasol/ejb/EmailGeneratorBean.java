@@ -7,24 +7,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.Timeout;
-import javax.ejb.Timer;
-import javax.ejb.TimerConfig;
-import javax.ejb.TimerService;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.Session;
-import javax.jms.TextMessage;
+import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 
-@Singleton
-@Startup
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import io.quarkus.scheduler.Scheduled;
+
+@ApplicationScoped
 public class EmailGeneratorBean {
 
     private static final int MAX_EMAILS = 15;
@@ -62,35 +56,27 @@ public class EmailGeneratorBean {
 
     private final AtomicInteger sentCount = new AtomicInteger(0);
 
-    @Resource(lookup = "java:/ConnectionFactory")
-    private ConnectionFactory connectionFactory;
-
-    @Resource(lookup = "java:/jms/queue/email-intake")
-    private Queue emailQueue;
-
-    @Resource
-    private TimerService timerService;
+    @Inject
+    @Channel("email-intake")
+    Emitter<String> emailEmitter;
 
     @PostConstruct
     void init() {
-        timerService.createIntervalTimer(5000, 45000, new TimerConfig("email-generator", false));
+        // Initialization logic if needed
     }
 
-    @Timeout
-    public void generate(Timer timer) {
+    @Scheduled(every = "45s", delay = 5)
+    @Transactional
+    public void generate() {
         if (sentCount.get() >= MAX_EMAILS) {
             return;
         }
 
         String email = EMAILS.get(RANDOM.nextInt(EMAILS.size()));
-        try (Connection connection = connectionFactory.createConnection();
-             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-             MessageProducer producer = session.createProducer(emailQueue)) {
-
-            TextMessage message = session.createTextMessage(email);
-            producer.send(message);
+        try {
+            emailEmitter.send(email);
             sentCount.incrementAndGet();
-        } catch (JMSException e) {
+        } catch (Exception e) {
             LOG.log(Level.SEVERE, "Failed to publish sample email", e);
         }
     }

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Parasol Insurance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="page-content">
+        <h1 class="page-title">Reports</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Loss Ratio (YTD)</div>
+                <div class="stat-value">61%</div>
+                <div class="stat-change up">Within target</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Claims Closed</div>
+                <div class="stat-value">142</div>
+                <div class="stat-change up">+9% vs prior year</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Cycle Time</div>
+                <div class="stat-value">11.4d</div>
+                <div class="stat-change down">−1.2 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Customer NPS</div>
+                <div class="stat-value">48</div>
+                <div class="stat-change up">Claims experience</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">Available Reports</div>
+                <div class="card-body">
+                    <ul class="recent-claims-list" id="reports-list"></ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Scheduled Exports</div>
+                <div class="card-body">
+                    <ul class="activity-list">
+                        <li>
+                            <div><strong>Weekly claims summary</strong> → claims-ops@parasol.demo</div>
+                            <div class="activity-time">Every Monday 07:00</div>
+                        </li>
+                        <li>
+                            <div><strong>Monthly loss triangle</strong> → actuarial@parasol.demo</div>
+                            <div class="activity-time">1st of month</div>
+                        </li>
+                        <li>
+                            <div><strong>Inbox routing quality</strong> → ops@parasol.demo</div>
+                            <div class="activity-time">Daily 18:00</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/layout.js"></script>
+    <script>
+        initLayout('reports');
+
+        const reports = [
+            { name: 'Open claims by status', period: 'As of today', status: 'Ready' },
+            { name: 'Paid losses by category', period: 'YTD 2025', status: 'Ready' },
+            { name: 'Adjuster workload', period: 'Last 30 days', status: 'Ready' },
+            { name: 'Policy renewals forecast', period: 'Next 90 days', status: 'Generating' },
+            { name: 'Inbox routing accuracy', period: 'Last 7 days', status: 'Ready' },
+            { name: 'Premium vs. exposure', period: 'Q4 2024', status: 'Ready' },
+        ];
+
+        document.getElementById('reports-list').innerHTML = reports.map(r => `
+            <li>
+                <div class="recent-claim-info">
+                    <span class="recent-claim-id">${r.name}</span>
+                    <span class="recent-claim-client">${r.period}</span>
+                </div>
+                <span class="status-badge ${r.status === 'Ready' ? 'processed' : 'in-process'}">${r.status}</span>
+            </li>`).join('');
+    </script>
+</body>
+</html>

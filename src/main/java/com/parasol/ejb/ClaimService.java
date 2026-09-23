@@ -2,16 +2,18 @@ package com.parasol.ejb;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 
 import com.parasol.model.Claim;
 
-@Stateless
+@ApplicationScoped
+@Transactional
 public class ClaimService {
 
-    @PersistenceContext(unitName = "ParasolPU")
+    @Inject
     private EntityManager entityManager;
 
     public List<Claim> findAll() {
