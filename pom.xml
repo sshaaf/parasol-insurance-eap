@@ -63,9 +63,20 @@
             <artifactId>resteasy-jackson2-provider</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- Vendored via file:// repo under lib/repository (not Maven Central) -->
+        <dependency>
+            <groupId>com.enterprise</groupId>
+            <artifactId>audit-logging-library</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <repositories>
+        <repository>
+            <id>project-local</id>
+            <name>Project Local Repository</name>
+            <url>file://${project.basedir}/lib/repository</url>
+        </repository>
         <repository>
             <id>jboss-ga-repository</id>
             <name>Red Hat GA Maven Repository</name>
